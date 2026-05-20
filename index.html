@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BOX Theory Analyzer</title>
+
+<!-- Core libs -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- GSAP + ScrollTrigger -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="css/styles.css"/>
+
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode:"class",
+  theme:{
+    extend:{
+      colors:{
+        "tertiary-container":"#161616",
+        "error-container":"rgba(239,68,68,0.10)",
+        "surface":"#1C1C1C",
+        "surface-container-lowest":"#0F0F0F",
+        "error":"#EF4444",
+        "surface-container-highest":"#242424",
+        "outline-variant":"rgba(255,255,255,0.08)",
+        "on-secondary-container":"#7B9EBF",
+        "on-primary":"#0F0F0F",
+        "tertiary-fixed-dim":"#5A5550",
+        "primary":"#F0EDE6",
+        "on-error":"#ffffff",
+        "primary-container":"#1C1C1C",
+        "surface-container":"#161616",
+        "tertiary-fixed":"#242424",
+        "surface-bright":"#1C1C1C",
+        "on-background":"#F0EDE6",
+        "on-primary-container":"#7B9EBF",
+        "on-secondary-fixed":"#0F0F0F",
+        "primary-fixed":"#242424",
+        "on-tertiary":"#F0EDE6",
+        "secondary":"#7B9EBF",
+        "surface-dim":"#1C1C1C",
+        "on-primary-fixed":"#0F0F0F",
+        "on-tertiary-fixed-variant":"#9A9590",
+        "on-surface-variant":"#9A9590",
+        "surface-variant":"#161616",
+        "primary-fixed-dim":"#7B9EBF",
+        "on-tertiary-fixed":"#F0EDE6",
+        "secondary-fixed":"rgba(123,158,191,0.12)",
+        "secondary-fixed-dim":"#7B9EBF",
+        "inverse-primary":"#7B9EBF",
+        "outline":"rgba(255,255,255,0.08)",
+        "inverse-surface":"#F0EDE6",
+        "on-error-container":"#EF4444",
+        "on-secondary":"#0F0F0F",
+        "on-surface":"#F0EDE6",
+        "tertiary":"#161616",
+        "inverse-on-surface":"#0F0F0F",
+        "surface-tint":"#7B9EBF",
+        "on-tertiary-container":"#9A9590",
+        "background":"#0F0F0F",
+        "on-secondary-fixed-variant":"#5880A0",
+        "surface-container-high":"#161616",
+        "on-primary-fixed-variant":"#5880A0",
+        "secondary-container":"rgba(123,158,191,0.08)",
+        "surface-container-low":"#1C1C1C"
+      },
+      borderRadius:{
+        "DEFAULT":"2px",
+        "lg":"4px",
+        "xl":"6px",
+        "full":"9999px"
+      },
+      spacing:{
+        "xl":"48px","gutter":"24px","margin-mobile":"20px","unit":"4px",
+        "margin-desktop":"80px","sm":"8px","lg":"24px","max-width":"1440px",
+        "xs":"4px","md":"16px"
+      },
+      fontFamily:{
+        "label-sm":["Plus Jakarta Sans","sans-serif"],
+        "headline-lg-mobile":["Playfair Display","serif"],
+        "headline-md":["Playfair Display","serif"],
+        "body-lg":["Plus Jakarta Sans","sans-serif"],
+        "body-md":["Plus Jakarta Sans","sans-serif"],
+        "label-lg":["Plus Jakarta Sans","sans-serif"],
+        "display-lg":["JetBrains Mono","monospace"],
+        "headline-lg":["Playfair Display","serif"]
+      },
+      fontSize:{
+        "label-sm":["11px",{"lineHeight":"16px","fontWeight":"500","letterSpacing":"0.04em"}],
+        "headline-lg-mobile":["26px",{"lineHeight":"34px","fontWeight":"600"}],
+        "headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],
+        "body-lg":["16px",{"lineHeight":"26px","fontWeight":"400"}],
+        "body-md":["14px",{"lineHeight":"22px","fontWeight":"400"}],
+        "label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"600"}],
+        "display-lg":["52px",{"lineHeight":"56px","letterSpacing":"-0.03em","fontWeight":"700"}],
+        "headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"600"}]
+      }
+    }
+  }
+}
+</script>
+
+
+</head>
+
+<body class="bg-surface text-on-surface font-body-md antialiased">
+
+<!-- Custom cursor dot (hidden on touch/mobile) -->
+<div id="cursor-dot" aria-hidden="true"></div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div id="heroSection">
+  <a id="heroBranding" href="#" onclick="return false;" style="position:absolute;top:20px;left:28px;z-index:10;text-decoration:none;font-family:'Playfair Display',serif;font-weight:700;font-size:1.15rem;color:#F2EDE6;letter-spacing:-0.01em;">BroMoney.in</a><!-- hero branding stays light (dark bg) -->
+  <video id="heroVideo" autoplay muted loop playsinline>
+    <source src="hero-video.webm" type="video/webm">
+  </video>
+  <div class="hero-overlay"></div>
+  <div class="hero-bottom-fade"></div>
+  <div class="hero-content">
+    <h1 id="heroHeadline" class="hero-headline">Stop guessing.<br>Start scoring.</h1>
+    <p id="heroSubheading" class="hero-subheading">BOX Theory stock analyzer built for Indian investors<br class="hero-br"> by a Bloomberg champion.</p>
+    <div class="hero-cta-wrap">
+      <button id="heroCtaAnalyze" class="hero-cta-primary" onclick="heroNavTo('analyzerSection','input')"><div class="tool-btn-glow"></div>Analyze a Stock</button>
+      <button id="heroCtaLearn" class="hero-cta-secondary" onclick="heroNavTo('learnSection')"><div class="tool-btn-glow"></div>Learn BOX Theory</button>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <div class="hero-scroll-hint-line"></div>
+  </div>
+</div>
+
+<!-- ═══════════ LANDING DOCK SECTION ═══════════ -->
+<div id="landingSection">
+  <div class="landing-inner">
+
+    <!-- Left: headline text -->
+    <div class="landing-text">
+      <h2 class="landing-headline">From overwhelming<br>to effortless.</h2>
+      <p class="landing-sub">BOX Theory scoring for every Indian investor. No jargon. No noise. Just clarity.</p>
+    </div>
+
+    <!-- Right: stock card + dock stacked -->
+    <div class="landing-coin-wrap">
+
+      <div class="stock-card" id="stockCard">
+
+        <!-- Time-range tabs -->
+        <div class="sc-tabs">
+          <button class="sc-tab"           data-range="1H">1H</button>
+          <button class="sc-tab"           data-range="1D">1D</button>
+          <button class="sc-tab sc-active" data-range="1W">1W</button>
+          <button class="sc-tab"           data-range="1M">1M</button>
+          <button class="sc-tab"           data-range="ALL">ALL</button>
+        </div>
+
+        <!-- Header: name + change -->
+        <div class="sc-header">
+          <div class="sc-name">RELIANCE</div>
+          <div class="sc-change" id="scChange">-2.92%</div>
+        </div>
+
+        <!-- Chart -->
+        <canvas class="sc-canvas" id="scCanvas"></canvas>
+
+      </div>
+
+      <!-- Dock floats over the card bottom — same column, negative margin -->
+      <div class="dock-container">
+        <div class="dock-pill" id="dockPill">
+
+          <button class="dock-icon-btn active"
+            data-nav="hero"
+            data-title="Home"
+            data-desc="Go back to the landing page and start fresh from the beginning.">
+            <span class="material-symbols-outlined">home</span>
+          </button>
+
+          <button class="dock-icon-btn"
+            data-nav="learnSection"
+            data-title="Learn BOX Theory"
+            data-desc="Understand the 6 dimensions, how scoring works and how to read your results. No jargon, just clarity.">
+            <span class="material-symbols-outlined">menu_book</span>
+          </button>
+
+          <button class="dock-icon-btn"
+            data-nav="analyzerSection"
+            data-title="BOX Theory Analyser"
+            data-desc="Score any NSE-listed stock across 6 fundamental dimensions. Enter a ticker and get a full analysis in seconds.">
+            <span class="material-symbols-outlined">analytics</span>
+          </button>
+
+          <button class="dock-icon-btn"
+            data-nav="toolsSection"
+            data-title="Financial Calculators"
+            data-desc="SIP returns, goal planning, options simulator and more. Built for Indian investors.">
+            <span class="material-symbols-outlined">calculate</span>
+          </button>
+
+          <button class="dock-icon-btn"
+            data-nav="newsSection"
+            data-title="News and market overview"
+            data-desc="Live headlines, FII and DII flows, bulk deals, macro signals and IPO watch. Updated continuously to keep you ahead.">
+            <span class="material-symbols-outlined">newspaper</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Annotation: bottom-right of section, like fey.com -->
+  <div class="dock-annot" id="dockAnnot">
+    <p class="dock-annot-title" id="dockAnnotTitle"></p>
+    <p class="dock-annot-desc"  id="dockAnnotDesc"></p>
+  </div>
+
+  <!-- SVG overlay for L-shaped dotted connector -->
+  <svg class="dock-connector-svg" id="dockConnectorSvg" aria-hidden="true">
+    <path id="dockConnectorPath" fill="none"
+      stroke="rgba(255,255,255,0.28)"
+      stroke-width="1"
+      stroke-dasharray="3 5"
+      stroke-linecap="round"/>
+  </svg>
+
+</div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="mainNav">
+  <a class="nav-logo" href="#" onclick="showHero();return false;" style="text-decoration:none;cursor:pointer;">
+    <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:1.15rem;color:#F0EDE6;letter-spacing:-0.01em;">BroMoney.in</span>
+  </a>
+  <div class="nav-right">
+<div class="nav-tabs">
+      <button class="nav-tab active" data-section="learnSection">Learn</button>
+      <button class="nav-tab" data-section="analyzerSection">Analyzer</button>
+      <button class="nav-tab" data-section="toolsSection">Tools</button>
+      <button class="nav-tab" data-section="newsSection">News</button>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ═══════════ ANALYZER SECTION ═══════════ -->
+<div id="analyzerSection" style="display:none;background:#0F0F0F;min-height:100vh;color:#F0EDE6;">
+
+<!-- ═══════════ VIEW: INPUT ═══════════ -->
+<div id="inputView">
+<main class="input-wrap">
+
+  <!-- Header -->
+  <div class="input-header">
+    <p class="eyebrow">BOX Theory Framework</p>
+    <h1 class="display-heading">Compare <em>any</em> two companies</h1>
+    <p class="lead-text">Enter NSE tickers. Receive a structured evaluation across six fundamental investment dimensions — Size, Usefulness, Strength, Versatility, Composition, Capacity.</p>
+  </div>
+
+  <!-- Company columns -->
+  <div class="company-grid">
+
+    <!-- Company A -->
+    <div class="company-col">
+      <p class="company-label">Company A</p>
+      <input
+        id="symbolA"
+        type="text"
+        placeholder="RELIANCE"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div style="margin-top:18px;">
+        <button type="button" onclick="toggleOptional('A')" class="opt-toggle">
+          <span id="chevronA" class="opt-chevron">›</span>
+          Optional details
+        </button>
+        <div id="optionalA" class="opt-panel">
+          <div class="opt-field">
+            <label>Business Description</label>
+            <textarea id="descA" placeholder="Core business activities… (optional)" rows="3"></textarea>
+          </div>
+          <div class="opt-field">
+            <label>Number of Countries</label>
+            <input id="geoA" type="number" min="1" placeholder="Default: 1"/>
+          </div>
+          <div class="opt-field">
+            <label>Capacity Utilisation (%)</label>
+            <input id="capA" type="number" min="0" max="100" placeholder="Default: 50"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical rule -->
+    <div class="col-divider"></div>
+
+    <!-- Company B -->
+    <div class="company-col">
+      <p class="company-label">Company B</p>
+      <input
+        id="symbolB"
+        type="text"
+        placeholder="TCS"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div style="margin-top:18px;">
+        <button type="button" onclick="toggleOptional('B')" class="opt-toggle">
+          <span id="chevronB" class="opt-chevron">›</span>
+          Optional details
+        </button>
+        <div id="optionalB" class="opt-panel">
+          <div class="opt-field">
+            <label>Business Description</label>
+            <textarea id="descB" placeholder="Core business activities… (optional)" rows="3"></textarea>
+          </div>
+          <div class="opt-field">
+            <label>Number of Countries</label>
+            <input id="geoB" type="number" min="1" placeholder="Default: 1"/>
+          </div>
+          <div class="opt-field">
+            <label>Capacity Utilisation (%)</label>
+            <input id="capB" type="number" min="0" max="100" placeholder="Default: 50"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /company-grid -->
+
+  <!-- CTA -->
+  <div style="margin-top:52px;">
+    <button type="button" onclick="handleCompare()" class="btn-analyze"><div class="tool-btn-glow"></div>
+      Run Analysis
+      <span class="material-symbols-outlined">compare_arrows</span>
+    </button>
+  </div>
+
+  <!-- Form error -->
+  <div id="formError" class="hidden bg-error-container border border-error rounded-lg px-md py-sm" style="margin-top:20px;max-width:480px;">
+    <p class="text-on-error-container font-label-lg"></p>
+  </div>
+
+</main>
+
+<!-- ══ Starburst visual — sits below the form, above the footer ══ -->
+<div id="analyzerBgWrap" aria-hidden="true">
+  <canvas id="analyzerBgCanvas"></canvas>
+</div>
+
+<footer class="bg-surface-container-low border-t border-outline-variant flex flex-col items-center w-full px-margin-mobile py-lg">
+  <p class="text-on-surface-variant font-label-sm text-center">BroMoney.in is not SEBI registered. All content is for educational and informational purposes only. Not investment advice.</p>
+</footer>
+</div><!-- /#inputView -->
+
+
+<!-- ═══════════ VIEW: LOADING ═══════════ -->
+<div id="loadingView" class="hidden">
+  <div class="loader-stage">
+    <div class="loader-box">
+      <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1.5" y="1.5" width="15" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="5" y="5" width="8" height="8" rx="1"/>
+      </svg>
+    </div>
+    <p class="loader-label loader-dots">ANALYZING</p>
+    <p class="loader-sub-text">Running rule-based analysis across 6 dimensions</p>
+    <div class="loader-track">
+      <div class="loader-bar"></div>
+    </div>
+  </div>
+</div><!-- /#loadingView -->
+
+
+<!-- ═══════════ VIEW: RESULTS ═══════════ -->
+<div id="resultsView" class="hidden">
+<main class="results-wrap">
+
+  <!-- Company header -->
+  <div class="result-header">
+    <p class="eyebrow" style="margin-bottom:12px;">Analysis Complete</p>
+    <h2 id="resultCompanyName" class="font-headline-lg text-primary"></h2>
+    <p id="resultIndustry" class="text-on-surface-variant font-body-lg" style="margin-top:4px;"></p>
+  </div>
+
+  <!-- Score + Radar -->
+  <section class="space-y-lg" style="margin-bottom:48px;">
+    <div class="border-l-4 border-secondary pl-md">
+      <h3 class="font-headline-md text-primary uppercase tracking-tight">BOX Theory Score</h3>
+    </div>
+
+    <!-- Score layout: ring left, mini-scores right -->
+    <div class="score-layout">
+      <!-- Ring -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div style="position:relative;width:160px;height:160px;">
+          <svg width="160" height="160" viewBox="0 0 140 140" style="transform:rotate(-90deg);">
+            <circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8"/>
+            <circle id="scoreArc" cx="70" cy="70" r="58" fill="none" stroke="#7B9EBF" stroke-width="8"
+              stroke-dasharray="364.42" stroke-dashoffset="364.42" stroke-linecap="round" class="score-arc"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+            <span id="totalScoreDisplay" class="font-display-lg text-primary" style="line-height:1;"></span>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;color:var(--text-3);letter-spacing:0.04em;">/ 60</span>
+          </div>
+        </div>
+        <div id="gradeBadge" class="grade-badge"></div>
+      </div>
+      <!-- Mini scores (JS renders a grid.grid-cols-3 here) -->
+      <div>
+        <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;">Dimension Scores</p>
+        <div class="grid grid-cols-3 gap-sm pt-sm">
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Size</p>
+            <p id="scoreSize" class="font-label-lg text-secondary"></p>
+          </div>
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Usefulness</p>
+            <p id="scoreUsefulness" class="font-label-lg text-secondary"></p>
+          </div>
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Strength</p>
+            <p id="scoreStrength" class="font-label-lg text-secondary"></p>
+          </div>
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Versatility</p>
+            <p id="scoreVersatility" class="font-label-lg text-secondary"></p>
+          </div>
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Composition</p>
+            <p id="scoreComposition" class="font-label-lg text-secondary"></p>
+          </div>
+          <div class="bg-surface-container rounded-lg p-sm text-center">
+            <p class="font-label-sm text-on-surface-variant mb-xs">Capacity</p>
+            <p id="scoreCapacity" class="font-label-lg text-secondary"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Radar -->
+    <div class="bg-surface-container-low border border-outline-variant rounded-lg p-lg">
+      <p class="section-rule">Radar Overview</p>
+      <div style="max-width:360px;margin:0 auto;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dimension analysis -->
+  <section class="space-y-lg" style="margin-bottom:48px;">
+    <div class="border-l-4 border-secondary pl-md">
+      <h3 class="font-headline-md text-primary uppercase tracking-tight">Dimension Analysis</h3>
+    </div>
+    <div id="dimCards" class="grid grid-cols-1 gap-lg"></div>
+  </section>
+
+  <!-- Investment Summary -->
+  <section class="space-y-lg" style="margin-bottom:48px;">
+    <div class="border-l-4 border-secondary pl-md">
+      <h3 class="font-headline-md text-primary uppercase tracking-tight">Overall Investment Summary</h3>
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant rounded-lg p-lg">
+      <p id="investmentSummary" class="font-body-md text-on-surface" style="line-height:1.8;"></p>
+    </div>
+  </section>
+
+  <!-- Investor Guidance -->
+  <section class="space-y-lg" style="margin-bottom:48px;">
+    <div class="border-l-4 border-secondary pl-md">
+      <h3 class="font-headline-md text-primary uppercase tracking-tight">What Should the Investor Do?</h3>
+    </div>
+    <div class="bg-secondary-container rounded-lg p-lg">
+      <p id="investorGuidance" class="font-body-md text-on-secondary-container" style="line-height:1.8;"></p>
+    </div>
+  </section>
+
+  <!-- Action buttons -->
+  <div class="pt-xl pb-lg flex flex-col gap-lg">
+    <button id="downloadPdfBtn">
+      <div class="tool-btn-glow"></div>
+      <span class="material-symbols-outlined">download</span>
+      Download Full Report as PDF
+    </button>
+    <button id="analyzeAnotherBtn">
+      <div class="tool-btn-glow"></div>
+      <span class="material-symbols-outlined">refresh</span>
+      Analyze Another Company
+    </button>
+  </div>
+
+</main>
+
+<footer class="bg-surface-container-low border-t border-outline-variant flex flex-col items-center w-full px-margin-mobile py-lg">
+  <p class="text-on-surface-variant font-label-sm text-center">BroMoney.in is not SEBI registered. All content is for educational and informational purposes only. Not investment advice.</p>
+</footer>
+</div><!-- /#resultsView -->
+
+
+<!-- ═══════════ VIEW: COMPARE RESULTS ═══════════ -->
+<div id="compareResultsView" class="hidden">
+<main id="cmp-main" style="max-width:960px;margin:0 auto;padding:48px 28px 100px;">
+
+  <div id="cmp-s1-banner" class="cmp-section"></div>
+
+  <div id="cmp-s2-radar" class="cmp-section">
+    <div class="cmp-section-header">
+      <div class="cmp-section-accent"></div>
+      <h3 class="cmp-section-title">BOX Theory Radar</h3>
+    </div>
+    <div class="cmp-card" style="padding:32px;">
+      <div style="max-width:420px;margin:0 auto;">
+        <canvas id="cmp-radar-canvas"></canvas>
+      </div>
+      <div id="cmp-radar-legend" style="display:flex;justify-content:center;gap:32px;margin-top:20px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <div id="cmp-s3-dims" class="cmp-section">
+    <div class="cmp-section-header">
+      <div class="cmp-section-accent"></div>
+      <h3 class="cmp-section-title">Dimension Breakdown</h3>
+    </div>
+    <div id="cmp-dim-cards" style="display:grid;gap:16px;"></div>
+  </div>
+
+  <div id="cmp-s4-table" class="cmp-section">
+    <div class="cmp-section-header">
+      <div class="cmp-section-accent"></div>
+      <h3 class="cmp-section-title">Key Metrics Comparison</h3>
+    </div>
+    <div class="cmp-card" style="overflow-x:auto;padding:0;">
+      <table id="cmp-metrics-table" style="width:100%;border-collapse:collapse;"></table>
+    </div>
+  </div>
+
+  <div id="cmp-s5-bar" class="cmp-section">
+    <div class="cmp-section-header">
+      <div class="cmp-section-accent"></div>
+      <h3 class="cmp-section-title">Score Comparison</h3>
+    </div>
+    <div class="cmp-card" style="padding:32px;">
+      <canvas id="cmp-bar-canvas" style="max-height:300px;"></canvas>
+    </div>
+  </div>
+
+  <div id="cmp-s6-verdict" class="cmp-section"></div>
+
+  <div style="margin-top:48px;text-align:center;">
+    <button onclick="cmpAnalyzeAgain()" class="cmp-again-btn">
+      <div class="tool-btn-glow"></div>
+      <span class="material-symbols-outlined">refresh</span>
+      Analyze Again
+    </button>
+  </div>
+
+</main>
+
+<footer class="bg-surface-container-low border-t border-outline-variant flex flex-col items-center w-full px-margin-mobile py-lg">
+  <p class="text-on-surface-variant font-label-sm text-center">BroMoney.in is not SEBI registered. All content is for educational and informational purposes only. Not investment advice.</p>
+</footer>
+</div><!-- /#compareResultsView -->
+
+</div><!-- /#analyzerSection -->
+
+<!-- ═══════════ TOOLS SECTION ═══════════ -->
+<div id="toolsSection" style="display:none;background:#0F0F0F;min-height:100vh;">
+<div class="tools-wrap">
+
+  <!-- Page header -->
+  <div class="tools-page-header">
+    <p class="eyebrow">Financial Calculators</p>
+    <h1>Financial Tools</h1>
+    <p>Select a tool below to get started.</p>
+  </div>
+
+  <div class="tools-layout" id="toolsLayout">
+
+    <!-- Active tool content (shown above buttons when a tool is selected) -->
+    <div class="tools-active-content" id="toolsActiveContent">
+      <section id="tool-box-scorer" class="tool-section" aria-label="BOX Theory Scorer">
+        <div class="news-section-header">
+          <div class="news-section-accent"></div>
+          <h2 class="news-section-title">BOX Theory Scorer</h2>
+        </div>
+        <p class="news-section-sub">The full BOX Theory Stock Analyzer lives on the main page.</p>
+        <button class="tool-btn" onclick="heroNavTo('analyzerSection','input')"><div class="tool-btn-glow"></div>Open BOX Analyzer →</button>
+      </section>
+
+  <section id="tool-sip-calculator" class="tool-section" aria-label="SIP Calculator">
+    <div class="sip-calc-wrap">
+
+      <!-- ── INPUT CARD ── -->
+      <div class="sip-card sip-input-card">
+        <header class="sip-card-head">
+          <div class="sip-card-title-wrap">
+            <div class="sip-card-kicker"><span class="sip-dot"></span>Step 01 · Inputs</div>
+            <h2 class="sip-card-title">SIP Calculator</h2>
+            <p class="sip-card-desc">Enter your monthly contribution, expected return, and time horizon to estimate your corpus.</p>
+          </div>
+          <div class="sip-card-badge">v2.4 · INR</div>
+        </header>
+
+        <div class="sip-fields">
+          <div class="sip-field" data-sip-field>
+            <span class="sip-field-prefix">₹</span>
+            <label class="sip-field-label" for="sipAmount">Monthly SIP Amount</label>
+            <input id="sipAmount" type="text" inputmode="numeric" placeholder=" " autocomplete="off" />
+            <span class="sip-field-hint">/ month</span>
+          </div>
+          <div class="sip-field" data-sip-field>
+            <span class="sip-field-prefix sip-prefix-pct">%</span>
+            <label class="sip-field-label" for="sipRate">Expected Annual Return</label>
+            <input id="sipRate" type="text" inputmode="decimal" placeholder=" " autocomplete="off" />
+            <span class="sip-field-hint">p.a.</span>
+          </div>
+          <div class="sip-field" data-sip-field>
+            <span class="sip-field-prefix sip-prefix-yr">YR</span>
+            <label class="sip-field-label" for="sipYears">Investment Duration</label>
+            <input id="sipYears" type="text" inputmode="numeric" placeholder=" " autocomplete="off" />
+            <span class="sip-field-hint">years</span>
+          </div>
+          <div class="sip-duration-marks" aria-hidden="true">
+            <span>1Y</span><span>5Y</span><span>10Y</span><span>15Y</span><span>20Y</span><span>30Y</span>
+          </div>
+        </div>
+
+        <div class="sip-actions">
+          <button class="sip-btn-calc" id="sip-btn-calc" type="button" onclick="sipCalcRun()">
+            <span class="sip-btn-label">Calculate</span>
+            <span class="sip-btn-spinner"><span class="sip-spinner-ring"></span>Crunching…</span>
+          </button>
+          <div class="sip-btn-foot">
+            <span>Results appear on the right →</span>
+            <span><kbd class="sip-kbd">↵</kbd> to calculate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RESULT CARD ── -->
+      <div class="sip-card sip-result-card">
+        <header class="sip-card-head">
+          <div class="sip-card-title-wrap">
+            <div class="sip-card-kicker"><span class="sip-dot"></span>Step 02 · Projection</div>
+            <h2 class="sip-card-title">Your Wealth Forecast</h2>
+            <p class="sip-card-desc">Compounded monthly. Tax &amp; inflation not adjusted.</p>
+          </div>
+          <div class="sip-card-badge" id="sip-badge-cagr">CAGR · —</div>
+        </header>
+        <div class="sip-result-divider"></div>
+        <div id="sip-results" class="sip-result-full">
+          <p class="sip-hero-label">Estimated corpus</p>
+          <div class="sip-hero-num">
+            <span class="sip-hero-currency">₹</span><span id="sip-corpus">—</span>
+          </div>
+          <div class="sip-pills">
+            <div class="sip-pill">
+              <span class="sip-pill-k">Invested</span>
+              <span class="sip-pill-v">₹<span id="sip-invested">—</span></span>
+            </div>
+            <div class="sip-pill sip-pill-returns">
+              <span class="sip-pill-k">Returns</span>
+              <span class="sip-pill-v">₹<span id="sip-returns">—</span></span>
+            </div>
+            <div class="sip-pill">
+              <span class="sip-pill-k">Horizon</span>
+              <span class="sip-pill-v"><span id="sip-years-disp">—</span></span>
+            </div>
+          </div>
+          <div class="sip-chart-card">
+            <div class="sip-chart-head">
+              <div class="sip-chart-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+                Growth Chart
+              </div>
+              <div class="sip-chart-legend">
+                <span class="sip-legend-item"><span class="sip-legend-sw sip-sw-invested"></span>Invested</span>
+                <span class="sip-legend-item"><span class="sip-legend-sw sip-sw-corpus"></span>Corpus</span>
+              </div>
+            </div>
+            <canvas id="sipChart"></canvas>
+          </div>
+          <div class="sip-result-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Returns are indicative, compounded monthly. Equity SIPs carry market risk — read scheme documents before investing.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="tool-goal-calculator" class="tool-section" aria-label="Goal Calculator">
+    <div class="gc-wrapper">
+
+      <!-- ── LEFT: Inputs ── -->
+      <div class="gc-panel">
+        <div class="gc-panel-header">
+          <div>
+            <div class="gc-step-label">
+              <span class="gc-dot"></span>
+              <span>Step 01 · Inputs</span>
+            </div>
+            <h2 class="gc-heading">Goal<br>Calculator</h2>
+            <p class="gc-subtext">Determine the monthly investment needed to reach your financial target.</p>
+          </div>
+          <div class="gc-badge">v2.4 · INR</div>
+        </div>
+
+        <div class="gc-inputs">
+          <div class="gc-input-field">
+            <label class="gc-input-label" for="goalCorpus">Target Corpus</label>
+            <div class="gc-input-row">
+              <span class="gc-input-prefix">₹</span>
+              <input type="number" id="goalCorpus" placeholder="10000000" min="1" class="gc-input">
+            </div>
+          </div>
+
+          <div class="gc-input-field">
+            <label class="gc-input-label" for="goalRate">Expected Annual Return</label>
+            <div class="gc-input-row">
+              <span class="gc-input-prefix">%</span>
+              <input type="number" id="goalRate" placeholder="12" min="0.1" max="100" step="0.1" class="gc-input">
+              <span class="gc-input-suffix">p.a.</span>
+            </div>
+          </div>
+
+          <div class="gc-input-field">
+            <label class="gc-input-label" for="goalYears">Time Available</label>
+            <div class="gc-input-row">
+              <span class="gc-input-prefix" style="font-size:11px;letter-spacing:0.06em;">YR</span>
+              <input type="number" id="goalYears" placeholder="15" min="1" max="50" class="gc-input">
+              <span class="gc-input-suffix">years</span>
+            </div>
+          </div>
+
+          <div class="gc-year-quick">
+            <button class="gc-yr-btn" onclick="gcSetYears(5)">5Y</button>
+            <button class="gc-yr-btn" onclick="gcSetYears(10)">10Y</button>
+            <button class="gc-yr-btn" onclick="gcSetYears(15)">15Y</button>
+            <button class="gc-yr-btn" onclick="gcSetYears(20)">20Y</button>
+            <button class="gc-yr-btn" onclick="gcSetYears(25)">25Y</button>
+            <button class="gc-yr-btn" onclick="gcSetYears(30)">30Y</button>
+          </div>
+        </div>
+
+        <div>
+          <button onclick="calculateGoal(); gcOnCalculate()" class="gc-calc-btn">Calculate</button>
+          <div class="gc-calc-hint">
+            <span>Results update on the right →</span>
+            <span><kbd class="gc-kbd">↵</kbd> to calculate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Results ── -->
+      <div class="gc-panel">
+        <div class="gc-panel-header">
+          <div>
+            <div class="gc-step-label">
+              <span class="gc-dot"></span>
+              <span>Step 02 · Projection</span>
+            </div>
+            <h2 class="gc-heading">Your Investment<br>Plan</h2>
+            <p class="gc-subtext" id="goal-target-display-text">Enter values and calculate to see your plan.</p>
+          </div>
+          <div class="gc-badge" id="goal-cagr-badge">CAGR · —</div>
+        </div>
+
+        <!-- Waiting state -->
+        <div id="gc-waiting" class="gc-waiting">
+          <div class="gc-waiting-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <p class="gc-waiting-title">Awaiting calculation</p>
+          <p class="gc-waiting-sub">Fill in your values on the left and click Calculate</p>
+        </div>
+
+        <!-- Results — revealed by calculateGoal() -->
+        <div id="goal-results" style="display:none;">
+          <div class="gc-sip-hero">
+            <label class="gc-input-label">Required Monthly SIP</label>
+            <div class="gc-sip-amount">
+              <span class="gc-sip-symbol">₹</span>
+              <span id="goal-sip" class="gc-sip-number">—</span>
+            </div>
+          </div>
+
+          <div class="gc-stats-grid">
+            <div class="gc-stat-box">
+              <label class="gc-input-label">Total Invested</label>
+              <div class="gc-stat-value">₹<span id="goal-invested">—</span></div>
+            </div>
+            <div class="gc-stat-box">
+              <label class="gc-input-label">Estimated Gains</label>
+              <div class="gc-stat-value gc-stat-copper">₹<span id="goal-returns">—</span></div>
+            </div>
+            <div class="gc-stat-box">
+              <label class="gc-input-label">Target Year</label>
+              <div class="gc-stat-value" id="goal-target-year">—</div>
+            </div>
+          </div>
+
+          <div class="gc-table-wrap">
+            <div class="gc-table-header">
+              <span class="gc-input-label" style="margin:0;">Corpus Growth Table</span>
+              <div class="gc-table-legend">
+                <span class="gc-legend-item"><span class="gc-legend-dot gc-legend-dot-muted"></span>Invested</span>
+                <span class="gc-legend-item"><span class="gc-legend-dot gc-legend-dot-copper"></span>Corpus</span>
+              </div>
+            </div>
+            <div class="gc-table-scroll">
+              <table class="gc-table">
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th style="text-align:right;">Corpus at that Year</th>
+                  </tr>
+                </thead>
+                <tbody id="goal-milestone-rows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="gc-disclaimer">Calculations are based on monthly compounding. Actual returns may vary based on market conditions. This is a projection tool and not a guarantee of future performance.</p>
+        </div><!-- /goal-results -->
+      </div><!-- /right panel -->
+
+    </div><!-- /gc-wrapper -->
+  </section>
+
+  <section id="tool-asset-allocation" class="tool-section" aria-label="Asset Allocation Visualizer">
+    <div class="aa-wrapper">
+
+      <!-- LEFT PANEL · INPUTS -->
+      <div class="aa-panel">
+        <div class="aa-panel-header">
+          <div>
+            <div class="aa-step-label"><span class="aa-dot"></span>STEP 01 · INPUTS</div>
+            <h2 class="aa-heading">Asset Allocation</h2>
+            <p class="aa-subtext">Enter your current investments to visualize your portfolio distribution.</p>
+          </div>
+          <div class="aa-badges">
+            <span class="aa-badge">V2.4</span>
+            <span class="aa-badge">INR</span>
+          </div>
+        </div>
+
+        <div class="aa-inputs">
+          <div class="aa-field">
+            <label class="aa-field-label">EQUITY</label>
+            <div class="aa-field-inner">
+              <span class="aa-field-prefix">₹</span>
+              <input class="aa-input" type="number" id="allocEquity" placeholder="00000" min="0">
+            </div>
+          </div>
+          <div class="aa-field">
+            <label class="aa-field-label">DEBT / FIXED INCOME</label>
+            <div class="aa-field-inner">
+              <span class="aa-field-prefix">₹</span>
+              <input class="aa-input" type="number" id="allocDebt" placeholder="00000" min="0">
+            </div>
+          </div>
+          <div class="aa-field">
+            <label class="aa-field-label">GOLD</label>
+            <div class="aa-field-inner">
+              <span class="aa-field-prefix">₹</span>
+              <input class="aa-input" type="number" id="allocGold" placeholder="00000" min="0">
+            </div>
+          </div>
+          <div class="aa-field">
+            <label class="aa-field-label">CASH / SAVINGS</label>
+            <div class="aa-field-inner">
+              <span class="aa-field-prefix">₹</span>
+              <input class="aa-input" type="number" id="allocCash" placeholder="00000" min="0">
+            </div>
+          </div>
+          <div class="aa-field">
+            <label class="aa-field-label">REAL ESTATE</label>
+            <div class="aa-field-inner">
+              <span class="aa-field-prefix">₹</span>
+              <input class="aa-input" type="number" id="allocRealEstate" placeholder="00000" min="0">
+            </div>
+          </div>
+        </div>
+
+        <button class="aa-calc-btn" onclick="calculateAllocation(); aaOnCalculate()">CALCULATE</button>
+        <div class="aa-calc-hint">RESULTS UPDATE IN REAL-TIME</div>
+      </div>
+
+      <!-- RIGHT PANEL · RESULTS -->
+      <div class="aa-panel">
+        <div class="aa-panel-header">
+          <div>
+            <div class="aa-step-label"><span class="aa-dot"></span>STEP 02 · PROJECTION</div>
+            <h2 class="aa-heading">Your Portfolio Mix</h2>
+            <p class="aa-subtext">Distribution based on current market valuations.</p>
+          </div>
+          <span class="aa-profile-badge" id="aa-profile-badge">—</span>
+        </div>
+
+        <div class="aa-waiting" id="aa-waiting">
+          <div class="aa-waiting-icon">◎</div>
+          <div class="aa-waiting-title">AWAITING INPUT</div>
+          <div class="aa-waiting-sub">Enter asset values and press Calculate</div>
+        </div>
+
+        <div id="alloc-results" style="display:none;">
+          <div class="aa-chart-area">
+            <div class="aa-chart-wrap">
+              <canvas id="allocChart"></canvas>
+              <div class="aa-chart-center">
+                <span class="aa-center-label">TOTAL CORPUS</span>
+                <span class="aa-center-value" id="aa-total-display">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="aa-legend-grid" id="aa-legend-grid"></div>
+          <div class="aa-info-note" id="alloc-note"></div>
+        </div>
+
+        <!-- hidden — keeps IDs that calculateAllocation() writes to -->
+        <table style="display:none">
+          <tbody id="alloc-table-body"></tbody>
+          <tfoot><tr><th></th><th id="alloc-total-amount"></th><th></th></tr></tfoot>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="tool-pe-comparison" class="tool-section" aria-label="P/E Comparison Tool"></section>
+
+  <section id="tool-overlap" class="tool-section" aria-label="Portfolio Overlap Checker">
+    <div class="news-section-header">
+      <div class="news-section-accent"></div>
+      <h2 class="news-section-title">Portfolio Overlap Checker</h2>
+    </div>
+    <p class="news-section-sub">Enter up to 5 NSE ticker symbols to see sector and characteristic overlaps in your portfolio.</p>
+    <div style="display:grid;gap:10px;max-width:400px;margin-bottom:16px;">
+      <label>Stock 1<input type="text" id="ov-t1" placeholder="e.g. RELIANCE" style="display:block;margin-top:4px;text-transform:uppercase;"></label>
+      <label>Stock 2<input type="text" id="ov-t2" placeholder="e.g. HDFCBANK" style="display:block;margin-top:4px;text-transform:uppercase;"></label>
+      <label>Stock 3 (optional)<input type="text" id="ov-t3" placeholder="e.g. TCS" style="display:block;margin-top:4px;text-transform:uppercase;"></label>
+      <label>Stock 4 (optional)<input type="text" id="ov-t4" placeholder="e.g. INFY" style="display:block;margin-top:4px;text-transform:uppercase;"></label>
+      <label>Stock 5 (optional)<input type="text" id="ov-t5" placeholder="e.g. WIPRO" style="display:block;margin-top:4px;text-transform:uppercase;"></label>
+      <button id="ov-btn" class="tool-btn" onclick="runOverlapCheck()"><div class="tool-btn-glow"></div>Check Overlap</button>
+    </div>
+    <div id="ov-loading" style="display:none;font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:16px;">Fetching data…</div>
+    <div id="ov-error"   style="display:none;color:#EF4444;font-size:14px;margin-bottom:16px;"></div>
+    <div id="ov-results" style="display:none;max-width:700px;"></div>
+  </section>
+
+  <section id="tool-52week" class="tool-section" aria-label="52-Week High/Low Screener"></section>
+
+  <section id="tool-earnings" class="tool-section" aria-label="Earnings Calendar">
+    <div class="news-section-header">
+      <div class="news-section-accent"></div>
+      <h2 class="news-section-title">Earnings Calendar</h2>
+    </div>
+    <p class="news-section-sub">Upcoming NSE quarterly result dates. Click <em>Add to Calendar</em> to download an .ics file for Google Calendar, Apple Calendar, or Outlook.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px;">
+      <span style="font-size:13px;color:rgba(255,255,255,0.5);">Show next:</span>
+      <button class="ec-range-btn" data-days="14" style="padding:6px 14px;font-size:13px;cursor:pointer;">14 days</button>
+      <button class="ec-range-btn" data-days="30" style="padding:6px 14px;font-size:13px;cursor:pointer;background:var(--gold);color:#0F0F0F;font-weight:600;">30 days</button>
+      <button class="ec-range-btn" data-days="60" style="padding:6px 14px;font-size:13px;cursor:pointer;">60 days</button>
+      <button class="ec-range-btn" data-days="90" style="padding:6px 14px;font-size:13px;cursor:pointer;">90 days</button>
+      <button id="ec-load-btn" class="tool-btn" onclick="loadEarnings()" style="margin-left:auto;"><div class="tool-btn-glow"></div>Load Calendar</button>
+    </div>
+    <div id="ec-loading" style="display:none;font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;">Fetching upcoming results…</div>
+    <div id="ec-error" style="display:none;color:#EF4444;font-size:14px;margin-bottom:16px;padding:10px;background:rgba(239,68,68,0.08);border-radius:4px;"></div>
+    <div id="ec-reminder-confirm" style="display:none;padding:10px 14px;background:rgba(123,158,191,0.10);border-left:3px solid var(--gold);font-size:13px;margin-bottom:16px;border-radius:0 4px 4px 0;"></div>
+    <div id="ec-results"></div>
+    <p style="margin-top:24px;font-size:12px;color:rgba(255,255,255,0.3);">ℹ️ Data via Yahoo Finance. Dates are estimates — always verify with the exchange.</p>
+  </section>
+
+  <section id="tool-options" class="tool-section" aria-label="Options Concepts Simulator">
+    <div class="opt-wrapper">
+
+      <!-- Left Panel: Inputs -->
+      <div class="opt-panel">
+        <div>
+          <div class="gc-step-label"><span class="gc-dot"></span>STEP 01 · INPUTS</div>
+          <h2 class="opt-heading">Simulator Inputs</h2>
+          <p class="opt-sub">Define your strategy parameters to visualize potential profit and loss scenarios.</p>
+        </div>
+
+        <div class="opt-toggle-group">
+          <span class="opt-type-label">OPTION TYPE</span>
+          <div class="opt-toggle-wrap">
+            <button id="opt-call-btn" class="opt-toggle-btn opt-active" onclick="selectOptionType('call')">CALL</button>
+            <button id="opt-put-btn"  class="opt-toggle-btn" onclick="selectOptionType('put')">PUT</button>
+          </div>
+          <input type="radio" name="optionType" value="call" checked style="display:none;">
+          <input type="radio" name="optionType" value="put"  style="display:none;">
+        </div>
+
+        <div class="opt-inputs">
+          <div class="opt-input-field">
+            <label class="opt-input-label" for="strikePrice">STRIKE PRICE (₹)</label>
+            <input type="number" id="strikePrice" class="opt-input" placeholder="1800" min="0" step="0.01">
+          </div>
+          <div class="opt-input-field">
+            <label class="opt-input-label" for="premiumPaid">PREMIUM PAID (₹)</label>
+            <input type="number" id="premiumPaid" class="opt-input" placeholder="50" min="0" step="0.01">
+          </div>
+          <div class="opt-input-field">
+            <label class="opt-input-label" for="expiryPrice">SPOT PRICE AT EXPIRY (₹)</label>
+            <input type="number" id="expiryPrice" class="opt-input" placeholder="1950" min="0" step="0.01">
+          </div>
+        </div>
+
+        <button class="opt-simulate-btn" onclick="calculateOption()">SIMULATE</button>
+      </div>
+
+      <!-- Right Panel: Results -->
+      <div class="opt-panel">
+        <div class="opt-result-header">
+          <div>
+            <div class="gc-step-label"><span class="gc-dot"></span>STEP 02 · PROJECTION</div>
+            <h2 class="opt-heading">Simulation Result</h2>
+          </div>
+          <div class="opt-risk-badge">
+            <span class="opt-risk-label">RISK</span>
+            <span class="opt-risk-value">FIXED</span>
+          </div>
+        </div>
+
+        <div id="opt-waiting" class="opt-waiting">
+          <div class="gc-waiting-icon">◈</div>
+          <div class="gc-waiting-title">Awaiting Input</div>
+          <div class="gc-waiting-sub">Enter parameters and click Simulate</div>
+        </div>
+
+        <div id="option-results" style="display:none;flex-direction:column;flex:1;gap:16px;">
+          <div class="opt-pnl-section">
+            <span class="opt-type-label">NET PROFIT / LOSS</span>
+            <span id="option-pnl" class="opt-pnl-value"></span>
+            <p class="opt-breakeven">Breakeven Point: ₹<span id="option-breakeven"></span></p>
+          </div>
+          <div class="opt-chart-area">
+            <div class="opt-chart-header">
+              <div class="opt-chart-title">
+                <span class="opt-chart-icon">◈</span>PAYOFF DIAGRAM
+              </div>
+              <div class="opt-chart-legend">
+                <span class="opt-legend-dot"></span>
+                <span class="opt-legend-label">EXPIRY PAYOFF</span>
+              </div>
+            </div>
+            <canvas id="optionsChart"></canvas>
+          </div>
+        </div>
+
+        <p class="opt-disclaimer">Returns are indicative. Options trading involves substantial risk of loss and is not suitable for all investors. For educational purposes only. Not investment advice.</p>
+      </div>
+
+    </div>
+  </section>
+
+    </div><!-- /.tools-active-content -->
+
+    <!-- Tool selector — iridescent cards -->
+    <div class="tools-btn-grid" id="toolsBtnGrid">
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="box-scorer">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 9 L16 3 L28 9 L28 23 L16 29 L4 23 Z"/><path d="M4 9 L16 15 L28 9"/><path d="M16 15 L16 29" opacity="0.5"/><circle cx="16" cy="15" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">12 inputs · v2.4</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Equity Analysis</div>
+            <h2 class="irid-title">BOX Theory Scorer</h2>
+            <p class="irid-desc">Identify consolidation breakouts across NSE-listed stocks.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="sip-calculator">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 26 L4 6"/><path d="M4 26 L28 26"/><path d="M7 22 L7 20" opacity="0.7"/><path d="M11 22 L11 17" opacity="0.85"/><path d="M15 22 L15 13"/><path d="M19 22 L19 9"/><path d="M23 22 L23 6"/><path d="M27 22 L27 3"/><circle cx="27" cy="3" r="1.4" fill="currentColor" stroke="none"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">8 inputs · v3.1</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Wealth Planning</div>
+            <h2 class="irid-title">SIP Calculator</h2>
+            <p class="irid-desc">Project monthly investments to build long-term wealth.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="goal-calculator">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="7.5" opacity="0.7"/><circle cx="16" cy="16" r="3" opacity="0.85"/><circle cx="16" cy="16" r="1" fill="currentColor" stroke="none"/><path d="M16 4 L16 1"/><path d="M28 16 L31 16"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">6 inputs · v2.0</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Financial Planning</div>
+            <h2 class="irid-title">Goal Calculator</h2>
+            <p class="irid-desc">Back-solve the SIP needed to reach a future corpus.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="asset-allocation">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="16" cy="16" r="11"/><path d="M16 5 A11 11 0 0 1 26.5 19 L16 16 Z" fill="currentColor" opacity="0.85" stroke="none"/><path d="M26.5 19 A11 11 0 0 1 10 25.5 L16 16 Z" fill="currentColor" opacity="0.5" stroke="none"/><circle cx="16" cy="16" r="4" fill="#1C1C1C" stroke="currentColor"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">5 classes · v1.6</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Portfolio Design</div>
+            <h2 class="irid-title">Asset Allocation</h2>
+            <p class="irid-desc">Map your equity, debt, and gold mix against model portfolios.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="pe-comparison">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="12" width="5" height="14"/><rect x="13.5" y="6" width="5" height="20" opacity="0.85"/><rect x="22" y="16" width="5" height="10" opacity="0.6"/><path d="M4 28 L28 28"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">4 metrics · v2.1</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Valuation</div>
+            <h2 class="irid-title">P/E Comparison</h2>
+            <p class="irid-desc">Stack a stock's multiple against peers and industry average.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="options">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 22 L3 16 L11 16 L16 10 L21 22 L29 22"/><path d="M3 28 L29 28" opacity="0.5"/><circle cx="16" cy="10" r="1.4" fill="currentColor" stroke="none"/><circle cx="11" cy="16" r="1.2" fill="currentColor" stroke="none" opacity="0.7"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">9 strategies · v1.3</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Derivatives</div>
+            <h2 class="irid-title">Options Simulator</h2>
+            <p class="irid-desc">Visualize call and put payoffs at expiry for any strike.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="overlap">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="16" r="8"/><circle cx="20" cy="16" r="8" opacity="0.7"/><path d="M16 9.6 A8 8 0 0 1 16 22.4 A8 8 0 0 1 16 9.6 Z" fill="currentColor" opacity="0.18" stroke="none"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">2+ stocks · v1.4</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Portfolio Analysis</div>
+            <h2 class="irid-title">Portfolio Overlap</h2>
+            <p class="irid-desc">Detect sector and industry overlaps across your holdings.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="52week">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 22 L5 24"/><path d="M27 22 L27 24"/><path d="M5 23 L27 23"/><path d="M5 18 L9 14 L14 17 L19 11 L24 9 L27 6"/><circle cx="5" cy="18" r="1.3" fill="currentColor" stroke="none" opacity="0.6"/><circle cx="27" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">NSE · v2.2</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Screener</div>
+            <h2 class="irid-title">52-Week Range</h2>
+            <p class="irid-desc">See where a stock sits within its 52-week high and low.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="irid-outer">
+        <button class="tool-select-btn iridescent-card" data-tool="earnings">
+          <div class="irid-bg-layer"></div>
+          <div class="irid-sheen-layer"></div>
+          <div class="irid-specular-layer"></div>
+          <div class="irid-noise-layer"></div>
+          <div class="irid-border-layer"></div>
+          <div class="irid-content">
+            <div class="irid-top-row">
+              <div class="irid-icon-box">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="7" width="22" height="21" rx="2"/><path d="M5 13 L27 13"/><path d="M11 4 L11 9"/><path d="M21 4 L21 9"/><circle cx="11" cy="19" r="1.2" fill="currentColor" stroke="none" opacity="0.5"/><circle cx="16" cy="19" r="1.2" fill="currentColor" stroke="none"/><circle cx="21" cy="19" r="1.2" fill="currentColor" stroke="none" opacity="0.5"/><circle cx="11" cy="23" r="1.2" fill="currentColor" stroke="none" opacity="0.5"/><circle cx="16" cy="23" r="1.2" fill="currentColor" stroke="none" opacity="0.5"/>
+                </svg>
+              </div>
+              <div class="irid-meta-text">Live feed · v1.0</div>
+            </div>
+            <div class="irid-eyebrow-row"><span class="irid-hr-line"></span>Calendar</div>
+            <h2 class="irid-title">Earnings Calendar</h2>
+            <p class="irid-desc">Track quarterly result dates across your watchlist tickers.</p>
+            <div class="irid-cta-row"><span class="irid-cta-label">Open Tool</span><span class="irid-arrow">→</span></div>
+          </div>
+        </button>
+      </div>
+
+    </div><!-- /.tools-btn-grid -->
+
+  </div><!-- /.tools-layout -->
+
+</div><!-- /.tools-wrap -->
+</div><!-- /#toolsSection -->
+
+<!-- ═══════════ LEARN SECTION ═══════════ -->
+<div id="learnSection" style="display:none;min-height:100vh;">
+<div class="learn-wrap">
+
+  <!-- ── SECTION 1: What is BOX Theory ── -->
+  <section id="learn-intro" class="lv-section lv-intro-section">
+    <div class="lv-watermark" aria-hidden="true">60</div>
+    <div class="lv-intro-inner">
+      <h1 class="lv-intro-headline">What is <em class="lv-hl-key">BOX</em> Theory?</h1>
+      <p class="lv-intro-body">A structured framework that evaluates any listed company across six dimensions of business quality. One score out of 60 tells you whether a business deserves your capital.</p>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: Size + Usefulness ── -->
+  <section id="learn-size-usefulness" class="lv-section lv-cards-section">
+    <div class="lv-card-pair">
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-size">
+          <img src="images/filename1.svg" alt="Size dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 01 — Size</p>
+        <h3 class="lv-dim-headline">How <em class="lv-hl-key">big</em><br>is the box?</h3>
+        <p class="lv-dim-body">Measures current scale — revenue, profit, market cap, and geographic reach. Large boxes offer stability; small boxes offer growth. A company that earns at scale has fewer fragile years ahead of it.</p>
+        <p class="lv-high-score">High score → market cap above ₹500Cr with consistent revenue growth</p>
+        <span class="lv-dim-metric">Market Cap &amp; Revenue</span>
+      </div>
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-use">
+          <img src="images/filename2.svg" alt="Usefulness dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 02 — Usefulness</p>
+        <h3 class="lv-dim-headline">Does it <em class="lv-hl-key">solve</em><br>real problems?</h3>
+        <p class="lv-dim-body">Measures how essential the product or service is to daily life. Essential businesses survive economic cycles; trend-driven ones rarely do. The more irreplaceable a product, the more pricing power it commands.</p>
+        <p class="lv-high-score">High score → sells something people buy through recessions</p>
+        <span class="lv-dim-metric">10-yr demand horizon</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: Strength + Versatility ── -->
+  <section id="learn-strength-versatility" class="lv-section lv-cards-section">
+    <div class="lv-card-pair">
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-str">
+          <img src="images/filename3.svg" alt="Strength dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 03 — Strength</p>
+        <h3 class="lv-dim-headline">Can it <em class="lv-hl-key">survive</em><br>pressure?</h3>
+        <p class="lv-dim-body">Measures financial and operational durability through recessions, rate hikes, and sector downturns. Strong companies emerge from stress intact. Debt that can't be serviced turns a slowdown into a catastrophe.</p>
+        <p class="lv-high-score">High score → ROCE above 20% with low or zero debt</p>
+        <span class="lv-dim-metric">ROCE &gt; 20%</span>
+      </div>
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-ver">
+          <img src="images/filename4.svg" alt="Versatility dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 04 — Versatility</p>
+        <h3 class="lv-dim-headline">How many ways<br>to <em class="lv-hl-key">grow</em>?</h3>
+        <p class="lv-dim-body">Measures the ability to diversify across products, customers, and geographies. Single-point dependence is fragility by design. A company with one customer, one product, or one country is one event away from trouble.</p>
+        <p class="lv-high-score">High score → revenue spread across 3+ segments or geographies</p>
+        <span class="lv-dim-metric">3+ revenue streams</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECTION 4: Composition + Capacity ── -->
+  <section id="learn-composition-capacity" class="lv-section lv-cards-section">
+    <div class="lv-card-pair">
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-cmp">
+          <img src="images/filename5.svg" alt="Composition dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 05 — Composition</p>
+        <h3 class="lv-dim-headline">What's it <em class="lv-hl-key">made</em><br>of inside?</h3>
+        <p class="lv-dim-body">Measures governance quality, earnings integrity, and promoter behaviour. Poor composition eventually destroys shareholder wealth. Numbers that look good but are built on aggressive accounting rarely survive scrutiny.</p>
+        <p class="lv-high-score">High score → zero promoter pledge, clean audits, consistent dividends</p>
+        <span class="lv-dim-metric">pledge = 0%</span>
+      </div>
+
+      <div class="lv-dim-card">
+        <div class="lv-dim-illus illus-cap">
+          <img src="images/filename6.svg" alt="Capacity dimension illustration" class="lv-illus-img">
+        </div>
+        <p class="lv-dim-label">Dimension 06 — Capacity</p>
+        <h3 class="lv-dim-headline">How much <em class="lv-hl-key">larger</em><br>can it get?</h3>
+        <p class="lv-dim-body">Measures future growth runway — industry size, expansion plans, and operating leverage. Multibaggers are built on high capacity. The best time to invest is when the market has not yet priced in the growth ahead.</p>
+        <p class="lv-high-score">High score → addressable market multiple times current revenue</p>
+        <span class="lv-dim-metric">revenue × 2 in 5yr</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECTION 5: CTA ── -->
+  <section id="learn-cta" class="lv-section lv-cta-section">
+    <div class="lv-cta-inner">
+      <h2 class="lv-cta-headline">Ready to score<br>a company?</h2>
+      <button class="lv-cta-btn" onclick="heroNavTo('analyzerSection','input')">Analyze Now →</button>
+    </div>
+  </section>
+
+</div><!-- /.learn-wrap -->
+</div><!-- /#learnSection -->
+
+
+<!-- ═══════════ NEWS SECTION ═══════════ -->
+<div id="newsSection" style="display:none;background:#0F0F0F;min-height:100vh;color:#F0EDE6;">
+
+<div class="news-wrap">
+
+  <!-- ── Headlines (editorial layout rendered by JS) ── -->
+  <div id="news-headlines" class="news-terminal-section">
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">newspaper</span>
+      Headlines loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── Today in Markets ── -->
+  <div id="news-today" class="news-terminal-section">
+    <h2 class="news-terminal-heading">Today in Markets</h2>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">today</span>
+      Today's summary loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── FII / DII Activity ── -->
+  <div id="news-fiidii" class="news-terminal-section">
+    <h2 class="news-terminal-heading">FII / DII Activity</h2>
+    <p class="news-terminal-sub">Foreign and domestic institutional buying and selling flows across cash market segments.</p>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">account_balance</span>
+      Institutional flow data loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── Bulk &amp; Block Deals ── -->
+  <div id="news-bulkdeals" class="news-terminal-section">
+    <h2 class="news-terminal-heading">Bulk &amp; Block Deals</h2>
+    <p class="news-terminal-sub">Large trades reported on NSE and BSE — institutional block deals and bulk deal disclosures.</p>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">swap_horiz</span>
+      Bulk &amp; block deals loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── Global Capital Flow Terminal ── -->
+  <div id="news-macro" class="news-terminal-section">
+    <div class="news-macro-hdr">
+      <h2 class="news-terminal-heading news-heading-inline">Global Capital Flow Terminal</h2>
+      <div class="news-macro-toggle-group">
+        <button class="news-macro-tbtn news-macro-tbtn-on" onclick="newsTerminalToggle(this,'24H')">24H</button>
+        <button class="news-macro-tbtn" onclick="newsTerminalToggle(this,'7D')">7D</button>
+        <button class="news-macro-tbtn" onclick="newsTerminalToggle(this,'1M')">1M</button>
+      </div>
+    </div>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">public</span>
+      Macro data loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── IPO Watch ── -->
+  <div id="news-ipo" class="news-terminal-section">
+    <h2 class="news-terminal-heading">IPO Watch</h2>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">rocket_launch</span>
+      IPO pipeline loading&hellip;
+    </div>
+  </div>
+
+  <!-- ── Policy &amp; Regulation ── -->
+  <div id="news-policy" class="news-terminal-section">
+    <h2 class="news-terminal-heading">Policy &amp; Regulation</h2>
+    <p class="news-terminal-sub">SEBI circulars, RBI announcements, government policy changes, and regulatory updates relevant to markets.</p>
+    <div class="news-placeholder">
+      <span class="material-symbols-outlined">gavel</span>
+      Policy updates loading&hellip;
+    </div>
+  </div>
+
+</div><!-- /.news-wrap -->
+</div><!-- /#newsSection -->
+
+
+<!-- ═══════════ COMPARE STYLES ═══════════ -->
+
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+
+
+<!-- ═══════════════════ TAB SWITCHING + GSAP ANIMATIONS ═══════════════════ -->
+
+
+<!-- ═══════════════════ COMPARE ANALYSIS ENGINE ═══════════════════ -->
+
+
+<!-- ═══════════ TOOLS JS ═══════════ -->
+<script src="js/api.js"></script>
+<script src="js/scoring.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/news.js"></script>
+<script src="js/tools.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── 1. Patch navHeroTrigger to fire after landing section, not just hero ── */
+  if (typeof navHeroTrigger !== 'undefined' && navHeroTrigger) {
+    navHeroTrigger.kill();
+  }
+  navHeroTrigger = ScrollTrigger.create({
+    trigger: '#landingSection',
+    start: 'bottom top',
+    onEnter: function () {
+      gsap.to('#mainNav', { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' });
+    },
+    onLeaveBack: function () {
+      gsap.to('#mainNav', { y: -60, opacity: 0, duration: 0.35, ease: 'power2.in' });
+    }
+  });
+
+  /* ── 2. Patch showHero() to also show/restore landingSection ── */
+  var _origShowHero = window.showHero;
+  window.showHero = function () {
+    if (_origShowHero) _origShowHero();
+
+    /* _origShowHero recreates navHeroTrigger on #heroSection — kill + redo */
+    if (typeof navHeroTrigger !== 'undefined' && navHeroTrigger) {
+      navHeroTrigger.kill();
+    }
+    navHeroTrigger = ScrollTrigger.create({
+      trigger: '#landingSection',
+      start: 'bottom top',
+      onEnter: function () {
+        gsap.to('#mainNav', { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' });
+      },
+      onLeaveBack: function () {
+        gsap.to('#mainNav', { y: -60, opacity: 0, duration: 0.35, ease: 'power2.in' });
+      }
+    });
+
+    /* Show landing section */
+    var ls = document.getElementById('landingSection');
+    if (ls) ls.style.display = '';
+
+    /* Reset dock: home icon active */
+    document.querySelectorAll('.dock-icon-btn').forEach(function (b) {
+      b.classList.remove('active');
+    });
+    var homeBtn = document.querySelector('.dock-icon-btn[data-nav="hero"]');
+    if (homeBtn) homeBtn.classList.add('active');
+  };
+
+  /* ── 3. Landing entrance animation via IntersectionObserver ── */
+  var ls = document.getElementById('landingSection');
+  if (ls) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          ls.classList.add('ls-in');
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.12 });
+    observer.observe(ls);
+  }
+
+  /* ── 4. Nav tab clicks → hide landing section ── */
+  document.querySelectorAll('.nav-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var ls = document.getElementById('landingSection');
+      if (ls) ls.style.display = 'none';
+    }, true); /* capture phase — runs before ui.js handler */
+  });
+
+  /* ── 5. Dock interactions ── */
+  var dockPill      = document.getElementById('dockPill');
+  var dockAnnot     = document.getElementById('dockAnnot');
+  var annotTitle    = document.getElementById('dockAnnotTitle');
+  var annotDesc     = document.getElementById('dockAnnotDesc');
+  var connectorSvg  = document.getElementById('dockConnectorSvg');
+  var connectorPath = document.getElementById('dockConnectorPath');
+  var landingEl     = document.getElementById('landingSection');
+
+  function drawConnector(btn) {
+    if (!connectorPath || !landingEl || !dockAnnot) return;
+    var sr   = landingEl.getBoundingClientRect();
+    var br   = btn.getBoundingClientRect();
+    var ar   = dockAnnot.getBoundingClientRect();
+
+    /* Icon bottom-centre, relative to landing section */
+    var ix = br.left + br.width  / 2 - sr.left;
+    var iy = br.bottom - sr.top;
+
+    /* Annotation top-left corner, relative to landing section — line stops here */
+    var ax = ar.left - sr.left;
+    var ay = ar.top  - sr.top + 10; /* align with title */
+
+    /* L-shape: down from icon → right to annotation */
+    connectorPath.setAttribute('d',
+      'M ' + ix + ' ' + iy +
+      ' L ' + ix + ' ' + ay +
+      ' L ' + ax + ' ' + ay
+    );
+  }
+
+  if (dockPill) {
+    var dockBtns = dockPill.querySelectorAll('.dock-icon-btn');
+
+    dockBtns.forEach(function (btn) {
+      btn.addEventListener('mouseenter', function () {
+        if (annotTitle) annotTitle.textContent = btn.dataset.title || '';
+        if (annotDesc)  annotDesc.textContent  = btn.dataset.desc  || '';
+        drawConnector(btn);
+        if (dockAnnot)    dockAnnot.classList.add('da-show');
+        if (connectorSvg) connectorSvg.classList.add('da-show');
+      });
+      btn.addEventListener('mouseleave', function () {
+        if (dockAnnot)    dockAnnot.classList.remove('da-show');
+        if (connectorSvg) connectorSvg.classList.remove('da-show');
+      });
+
+      /* Click → navigate */
+      btn.addEventListener('click', function () {
+        var nav = btn.dataset.nav;
+
+        if (nav === 'hero') {
+          dockBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+
+        /* Hide hero + landing, show nav */
+        ['heroSection', 'landingSection'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        var brand = document.getElementById('heroBranding');
+        if (brand) brand.style.display = 'none';
+
+        if (typeof navHeroTrigger !== 'undefined' && navHeroTrigger) {
+          navHeroTrigger.kill();
+          navHeroTrigger = null;
+        }
+        gsap.killTweensOf('#mainNav');
+        gsap.set('#mainNav', { y: 0, opacity: 1 });
+
+        /* Navigate to section */
+        var tab = document.querySelector('.nav-tab[data-section="' + nav + '"]');
+        if (tab) tab.click();
+      });
+    });
+  }
+
+  /* ── 6. Stock card chart ── */
+  var SC_DATA = {
+    '1H':  [0.50,0.52,0.48,0.53,0.55,0.51,0.49,0.54,0.56,0.52,0.50,0.47,0.49,0.51,0.48,0.46,0.44,0.42,0.40,0.38],
+    '1D':  [0.42,0.45,0.50,0.55,0.52,0.48,0.53,0.60,0.58,0.55,0.52,0.56,0.54,0.50,0.47,0.44,0.41,0.38,0.36,0.34,0.32,0.30,0.28,0.26],
+    '1W':  [0.36,0.44,0.62,0.54,0.48,0.52,0.60,0.68,0.58,0.52,0.61,0.76,0.72,0.62,0.50,0.42,0.35,0.27,0.20],
+    '1M':  [0.28,0.32,0.38,0.44,0.42,0.48,0.55,0.60,0.58,0.64,0.70,0.68,0.72,0.76,0.74,0.70,0.66,0.62,0.58,0.54,0.50,0.46,0.42,0.38,0.35,0.32,0.30,0.27,0.25,0.22],
+    'ALL': [0.20,0.22,0.25,0.28,0.26,0.30,0.35,0.32,0.38,0.42,0.40,0.45,0.50,0.48,0.55,0.60,0.58,0.64,0.68,0.66,0.72,0.78,0.76,0.80,0.82,0.78,0.74,0.70,0.66,0.62,0.58,0.54,0.50,0.46,0.42,0.38,0.35,0.32,0.28,0.25,0.23,0.20,0.18,0.16,0.14,0.12,0.10,0.13,0.16,0.18]
+  };
+  var SC_META = {
+    '1H':  { change: '+0.41%', up: true  },
+    '1D':  { change: '-1.18%', up: false },
+    '1W':  { change: '-2.92%', up: false },
+    '1M':  { change: '-8.54%', up: false },
+    'ALL': { change: '-9.80%', up: false }
+  };
+  var scActiveRange = '1W';
+
+  function initStockCard() {
+    var canvas  = document.getElementById('scCanvas');
+    var changeEl = document.getElementById('scChange');
+    if (!canvas) return;
+
+    /* Tab switching */
+    document.querySelectorAll('.sc-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.sc-tab').forEach(function (b) { b.classList.remove('sc-active'); });
+        btn.classList.add('sc-active');
+        scActiveRange = btn.dataset.range;
+        var meta = SC_META[scActiveRange];
+        if (changeEl) {
+          changeEl.textContent = meta.change;
+          changeEl.className   = 'sc-change' + (meta.up ? ' sc-up' : '');
+        }
+        renderChart(canvas, SC_DATA[scActiveRange]);
+      });
+    });
+
+    renderChart(canvas, SC_DATA['1W']);
+  }
+
+  function renderChart(canvas, data) {
+    var W   = canvas.offsetWidth  || 300;
+    var H   = canvas.offsetHeight || 220;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    var padX = 2, padT = 10, padB = 6;
+    var cW = W - padX * 2;
+    var cH = H - padT - padB;
+
+    var mn = Math.min.apply(null, data);
+    var mx = Math.max.apply(null, data);
+    var rng = mx - mn || 1;
+
+    /* Map data → pixel coords */
+    var pts = data.map(function (v, i) {
+      return {
+        x: padX + (i / (data.length - 1)) * cW,
+        y: padT + (1 - (v - mn) / rng) * cH
+      };
+    });
+
+    /* Sharp straight segments — no smoothing */
+    function buildLinePath() {
+      var p = new Path2D();
+      p.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length; i++) p.lineTo(pts[i].x, pts[i].y);
+      return p;
+    }
+
+    /* Fill area path — closes at the bottom */
+    function buildFillPath() {
+      var p = new Path2D();
+      var bot = padT + cH;
+      p.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length; i++) p.lineTo(pts[i].x, pts[i].y);
+      p.lineTo(pts[pts.length - 1].x, bot);
+      p.lineTo(pts[0].x, bot);
+      p.closePath();
+      return p;
+    }
+
+    /* Horizontal stroke gradient: green → white → red */
+    var strokeGrad = ctx.createLinearGradient(padX, 0, padX + cW, 0);
+    strokeGrad.addColorStop(0,    '#34d399');
+    strokeGrad.addColorStop(0.36, '#6ee7b7');
+    strokeGrad.addColorStop(0.55, '#e2e8f0');
+    strokeGrad.addColorStop(0.72, '#fca5a5');
+    strokeGrad.addColorStop(1,    '#f87171');
+
+    /* Vertical fill gradient: red → transparent */
+    var fillGrad = ctx.createLinearGradient(0, padT, 0, padT + cH);
+    fillGrad.addColorStop(0,   'rgba(248,113,113,0.22)');
+    fillGrad.addColorStop(0.6, 'rgba(248,113,113,0.06)');
+    fillGrad.addColorStop(1,   'rgba(248,113,113,0)');
+
+    var linePath  = buildLinePath();
+    var fillPath  = buildFillPath();
+
+    /* Draw frame at given progress (0→1) */
+    function drawFrame(progress) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, padX + cW * progress + 2, H);
+      ctx.clip();
+
+      ctx.fillStyle = fillGrad;
+      ctx.fill(fillPath);
+
+      ctx.strokeStyle = strokeGrad;
+      ctx.lineWidth   = 1.5;
+      ctx.lineJoin    = 'miter';
+      ctx.lineCap     = 'square';
+      ctx.stroke(linePath);
+
+      ctx.restore();
+    }
+
+    /* Animate left-to-right — only starts when canvas is in the viewport */
+    var progress  = 0;
+    var animating = false;
+    function runAnim() {
+      if (animating) return;
+      animating = true;
+      progress  = 0;
+      (function tick() {
+        progress = Math.min(1, progress + 0.028);
+        drawFrame(progress);
+        if (progress < 1) requestAnimationFrame(tick);
+      })();
+    }
+
+    /* If already visible (e.g. tab switch), start immediately; else wait for scroll */
+    var cvRect = canvas.getBoundingClientRect();
+    if (cvRect.top < window.innerHeight && cvRect.bottom > 0) {
+      runAnim();
+    } else {
+      var chartObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { runAnim(); chartObs.disconnect(); }
+        });
+      }, { threshold: 0.2 });
+      chartObs.observe(canvas);
+    }
+  }
+
+  requestAnimationFrame(function () { requestAnimationFrame(initStockCard); });
+
+})();
+</script>
+</body>
+</html>
